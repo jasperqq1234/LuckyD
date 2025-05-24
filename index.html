@@ -89,6 +89,7 @@
             white-space: nowrap;
             border: none;
             width: auto;
+            display: none;
         }
 
         .control-button {
@@ -241,7 +242,7 @@
         </div>
         <div class="wheel-container">
             <canvas id="wheel" width="500" height="500"></canvas>
-            <button class="spin-button" onclick="spin()" id="spinButton">按一下以旋轉</button>
+            <button class="spin-button" onclick="spin()" id="spinButton" style="display: none;">按一下以旋轉</button>
             <div class="pointer" id="pointer"></div>
         </div>
         <div class="result-container" id="resultContainer">
@@ -377,14 +378,23 @@
             hideResult();
         }
 
+        function showGameControls(show) {
+            const spinButton = document.getElementById('spinButton');
+            const shuffleButton = document.getElementById('shuffleButton');
+            const resetButton = document.getElementById('resetButton');
+            const display = show ? 'block' : 'none';
+            
+            spinButton.style.display = display;
+            shuffleButton.style.display = display;
+            resetButton.style.display = display;
+        }
+
         function generateWheel() {
             const minNumber = parseInt(document.getElementById('minNumber').value);
             const maxNumber = parseInt(document.getElementById('maxNumber').value);
 
             if (isNaN(minNumber) || isNaN(maxNumber) || minNumber >= maxNumber) {
-                document.getElementById('spinButton').disabled = true;
-                document.getElementById('shuffleButton').style.display = 'none';
-                document.getElementById('resetButton').style.display = 'none';
+                showGameControls(false);
                 hideResult();
                 return;
             }
@@ -397,9 +407,7 @@
 
             currentRotation = 0;
             drawWheel();
-            document.getElementById('spinButton').disabled = false;
-            document.getElementById('shuffleButton').style.display = 'inline-block';
-            document.getElementById('resetButton').style.display = 'inline-block';
+            showGameControls(true);
             hideResult();
         }
 
