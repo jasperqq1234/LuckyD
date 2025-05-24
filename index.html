@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隨機抽籤輪盤</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .input-group {
+            margin: 10px 0;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100px;
+        }
+
+        .wheel-container {
+            margin: 20px auto;
+            position: relative;
+            width: 500px;
+            height: 500px;
+            background-image: url('u1f426_u1f422.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        #wheel {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .spin-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 18px;
+            white-space: nowrap;
+            border: none;
+            width: auto;
+        }
+
+        .pointer {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-right: 40px solid red;
+            z-index: 2;
+            margin-right: -20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>隨機抽籤輪盤</h1>
+        <div class="input-group">
+            <input type="number" id="minNumber" placeholder="最小數字" min="1" value="">
+            到
+            <input type="number" id="maxNumber" placeholder="最大數字" min="1" value="">
+        </div>
+        <div class="wheel-container">
+            <canvas id="wheel" width="500" height="500"></canvas>
+            <button class="spin-button" onclick="spin()" id="spinButton">按一下以旋轉</button>
+            <div class="pointer"></div>
+        </div>
+    </div>
+
+    <script>
+        let numbers = [];
+        let currentRotation = 0;
+        let debounceTimer;
+
+        function drawWheel(rotation = 0) {
+            const canvas = document.getElementById('wheel');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 5;
+
+            // 清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 繪製外圈
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            const segmentAngle = (Math.PI * 2) / numbers.length;
+
+            // 根據數字的位數調整字體大小
+            const maxDigits = Math.max(...numbers).toString().length;
+            const fontSize = Math.max(12, Math.min(24, 30 - maxDigits * 2));
+            
+            // 繪製扇形和數字
+            numbers.forEach((number, index) => {
+                const startAngle = index * segmentAngle + rotation;
+                const endAngle = startAngle + segmentAngle;
+
+                // 繪製扇形
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fill();
+                ctx.stroke();
+
+                // 繪製數字
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + segmentAngle / 2);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.fillStyle = 'black';
+                
+                // 調整文字位置，更靠近邊緣
+                const textRadius = radius * 0.85;
+                ctx.fillText(number.toString(), textRadius, 0);
+                ctx.restore();
+            });
+        }
+
+        function generateWheel() {
+            const minNumber = parseInt(document.getElementById('minNumber').value);
+            const maxNumber = parseInt(document.getElementById('maxNumber').value);
+
+            if (isNaN(minNumber) || isNaN(maxNumber) || minNumber >= maxNumber) {
+                document.getElementById('spinButton').disabled = true;
+                return;
+            }
+
+            numbers = [];
+            for (let i = minNumber; i <= maxNumber; i++) {
+                numbers.push(i);
+            }
+
+            currentRotation = 0;
+            drawWheel();
+            document.getElementById('spinButton').disabled = false;
+        }
+
+        function spin() {
+            const spinButton = document.getElementById('spinButton');
+            spinButton.disabled = true;
+
+            const randomIndex = Math.floor(Math.random() * numbers.length);
+            const winningNumber = numbers[randomIndex];
+            
+            const segmentAngle = (Math.PI * 2) / numbers.length;
+            const extraSpins = 5;
+            const targetRotation = -((randomIndex * segmentAngle) + (segmentAngle / 2) + (Math.PI * 2 * extraSpins));
+            
+            let startTime = null;
+            const duration = 3000;
+
+            function animate(currentTime) {
+                if (!startTime) startTime = currentTime;
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                
+                currentRotation = targetRotation * easeProgress;
+                drawWheel(currentRotation);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    setTimeout(() => {
+                        alert(`恭喜！抽中數字 ${winningNumber}！`);
+                        spinButton.disabled = false;
+                    }, 100);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // 監聽輸入框變化
+        document.getElementById('minNumber').addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(generateWheel, 300);
+        });
+
+        document.getElementById('maxNumber').addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(generateWheel, 300);
+        });
+
+        // 初始化轉盤
+        generateWheel();
+    </script>
+</body>
+</html> 
