@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>龜Talk輪盤</title>
     <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -15,6 +20,13 @@
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+        }
+
+        button {
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .container {
@@ -90,6 +102,7 @@
             border: none;
             width: auto;
             display: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .control-button {
@@ -102,6 +115,7 @@
             transition: all 0.3s ease;
             display: none;
             min-width: 80px;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .shuffle-button {
@@ -224,6 +238,12 @@
 
             .winning-number {
                 font-size: 24px;
+            }
+        }
+
+        @media (hover: hover) {
+            .control-button:hover {
+                transform: translateY(-1px);
             }
         }
     </style>
@@ -462,6 +482,26 @@
 
         // 初始化轉盤
         generateWheel();
+
+        // 防止雙擊縮放
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        // 防止雙指縮放
+        document.addEventListener('gesturestart', function(event) {
+            event.preventDefault();
+        });
+
+        // 防止按鈕快速點擊時的縮放
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                this.click();
+            });
+        });
     </script>
 </body>
 </html> 
