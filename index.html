@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>隨機抽籤輪盤</title>
+    <title>龜Talk輪盤</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -31,17 +31,23 @@
         }
 
         .input-group {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .control-buttons {
             margin: 15px 0;
             display: flex;
             justify-content: center;
-            align-items: center;
             gap: 10px;
-            flex-wrap: wrap;
         }
 
         input {
             padding: 8px;
-            margin: 5px;
             border: 1px solid #ddd;
             border-radius: 4px;
             width: 100px;
@@ -83,6 +89,36 @@
             white-space: nowrap;
             border: none;
             width: auto;
+        }
+
+        .control-button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            color: white;
+            transition: all 0.3s ease;
+            display: none;
+            min-width: 80px;
+        }
+
+        .shuffle-button {
+            background-color: #4CAF50;
+        }
+
+        .shuffle-button:hover {
+            background-color: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .reset-button {
+            background-color: #2196F3;
+        }
+
+        .reset-button:hover {
+            background-color: #1976D2;
+            transform: translateY(-1px);
         }
 
         .pointer {
@@ -157,9 +193,23 @@
                 margin-right: -15px;
             }
 
+            .input-group {
+                gap: 4px;
+            }
+
             input {
                 width: 80px;
+            }
+
+            .control-buttons {
+                margin: 10px 0;
+                gap: 8px;
+            }
+
+            .control-button {
+                padding: 8px 16px;
                 font-size: 14px;
+                min-width: 70px;
             }
 
             .result-container {
@@ -179,11 +229,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>隨機抽籤輪盤</h1>
+        <h1>龜Talk輪盤</h1>
         <div class="input-group">
             <input type="number" id="minNumber" placeholder="最小數字" min="1" value="">
             到
             <input type="number" id="maxNumber" placeholder="最大數字" min="1" value="">
+        </div>
+        <div class="control-buttons">
+            <button class="control-button shuffle-button" onclick="shuffleNumbers()" id="shuffleButton">打散</button>
+            <button class="control-button reset-button" onclick="resetNumbers()" id="resetButton">重置</button>
         </div>
         <div class="wheel-container">
             <canvas id="wheel" width="500" height="500"></canvas>
@@ -198,6 +252,7 @@
 
     <script>
         let numbers = [];
+        let originalNumbers = [];
         let currentRotation = 0;
         let debounceTimer;
 
@@ -300,15 +355,36 @@
             resultContainer.style.display = 'none';
         }
 
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function shuffleNumbers() {
+            numbers = shuffleArray([...numbers]);
+            currentRotation = 0;
+            drawWheel();
+            hideResult();
+        }
+
+        function resetNumbers() {
+            numbers = [...originalNumbers];
+            currentRotation = 0;
+            drawWheel();
+            hideResult();
+        }
+
         function generateWheel() {
             const minNumber = parseInt(document.getElementById('minNumber').value);
             const maxNumber = parseInt(document.getElementById('maxNumber').value);
 
-            // 檢查輸入是否有效
             if (isNaN(minNumber) || isNaN(maxNumber) || minNumber >= maxNumber) {
-                numbers = []; // 清空數字數組
-                drawWheel(); // 重新繪製（會清空轉盤）
                 document.getElementById('spinButton').disabled = true;
+                document.getElementById('shuffleButton').style.display = 'none';
+                document.getElementById('resetButton').style.display = 'none';
                 hideResult();
                 return;
             }
@@ -317,10 +393,13 @@
             for (let i = minNumber; i <= maxNumber; i++) {
                 numbers.push(i);
             }
+            originalNumbers = [...numbers];
 
             currentRotation = 0;
             drawWheel();
             document.getElementById('spinButton').disabled = false;
+            document.getElementById('shuffleButton').style.display = 'inline-block';
+            document.getElementById('resetButton').style.display = 'inline-block';
             hideResult();
         }
 
