@@ -42,39 +42,8 @@
             margin: 15px 0;
         }
 
-        .mode-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .mode-button {
-            padding: 8px 20px;
-            border: 2px solid #4CAF50;
-            border-radius: 4px;
-            background-color: white;
-            color: #4CAF50;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .mode-button.active {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .input-container {
-            display: none;
-            margin: 15px 0;
-        }
-
-        .input-container.active {
-            display: block;
-        }
-
-        .number-input-group {
+        .input-group {
+            margin: 10px 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -82,10 +51,10 @@
             flex-wrap: wrap;
         }
 
-        .text-input-group {
+        .control-buttons {
+            margin: 15px 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            justify-content: center;
             gap: 10px;
         }
 
@@ -95,30 +64,6 @@
             border-radius: 4px;
             width: 100px;
             font-size: 16px;
-        }
-
-        textarea {
-            width: 100%;
-            max-width: 400px;
-            height: 100px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            resize: vertical;
-        }
-
-        .input-hint {
-            color: #666;
-            font-size: 14px;
-            margin: 5px 0;
-        }
-
-        .control-buttons {
-            margin: 15px 0;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
         }
 
         .wheel-container {
@@ -139,12 +84,6 @@
             left: 0;
             width: 100%;
             height: 100%;
-            opacity: 1;
-            transition: opacity 0.3s ease;
-        }
-
-        #wheel.hidden {
-            opacity: 0;
         }
 
         .spin-button {
@@ -253,11 +192,6 @@
                 font-size: 20px;
             }
 
-            .mode-button {
-                padding: 6px 16px;
-                font-size: 14px;
-            }
-
             .wheel-container {
                 margin: 10px auto;
             }
@@ -272,6 +206,14 @@
                 border-bottom: 15px solid transparent;
                 border-right: 30px solid red;
                 margin-right: -15px;
+            }
+
+            .input-group {
+                gap: 4px;
+            }
+
+            input {
+                width: 80px;
             }
 
             .control-buttons {
@@ -309,22 +251,10 @@
 <body>
     <div class="container">
         <h1>龜Talk輪盤</h1>
-        <div class="mode-selector">
-            <button class="mode-button active" onclick="switchMode('number')">數字範圍</button>
-            <button class="mode-button" onclick="switchMode('text')">自訂文字</button>
-        </div>
-        <div id="numberInput" class="input-container active">
-            <div class="number-input-group">
-                <input type="number" id="minNumber" placeholder="最小數字" min="1" value="">
-                到
-                <input type="number" id="maxNumber" placeholder="最大數字" min="1" value="">
-            </div>
-        </div>
-        <div id="textInput" class="input-container">
-            <div class="text-input-group">
-                <textarea id="customInput" placeholder="請輸入要抽籤的內容，每行一個項目"></textarea>
-                <!-- <p class="input-hint">提示：每行輸入一個項目，可以是文字或數字</p> -->
-            </div>
+        <div class="input-group">
+            <input type="number" id="minNumber" placeholder="最小數字" min="1" value="">
+            到
+            <input type="number" id="maxNumber" placeholder="最大數字" min="1" value="">
         </div>
         <div class="control-buttons">
             <button class="control-button shuffle-button" onclick="shuffleNumbers()" id="shuffleButton">打散</button>
@@ -336,69 +266,16 @@
             <div class="pointer" id="pointer"></div>
         </div>
         <div class="result-container" id="resultContainer">
-            <p class="result-text">恭喜！抽中</p>
+            <p class="result-text">恭喜！抽中數字</p>
             <span class="winning-number" id="winningNumberDisplay"></span>
         </div>
     </div>
 
     <script>
-        let items = [];
-        let originalItems = [];
+        let numbers = [];
+        let originalNumbers = [];
         let currentRotation = 0;
         let debounceTimer;
-        let currentMode = 'number';
-
-        function switchMode(mode) {
-            if (mode === currentMode) return;
-
-            currentMode = mode;
-            const numberInput = document.getElementById('numberInput');
-            const textInput = document.getElementById('textInput');
-            const modeButtons = document.querySelectorAll('.mode-button');
-            const wheelContainer = document.querySelector('.wheel-container');
-
-            // 更新按鈕狀態
-            modeButtons.forEach(button => {
-                button.classList.remove('active');
-                if (button.textContent.includes(mode === 'number' ? '數字' : '文字')) {
-                    button.classList.add('active');
-                }
-            });
-
-            // 切換輸入區域
-            numberInput.classList.toggle('active');
-            textInput.classList.toggle('active');
-
-            // 清空輸入
-            if (mode === 'number') {
-                document.getElementById('minNumber').value = '';
-                document.getElementById('maxNumber').value = '';
-            } else {
-                document.getElementById('customInput').value = '';
-            }
-
-            // 隱藏輪盤和控制按鈕
-            hideWheel();
-            items = [];
-            originalItems = [];
-        }
-
-        function hideWheel() {
-            const wheel = document.getElementById('wheel');
-            const pointer = document.getElementById('pointer');
-            const spinButton = document.getElementById('spinButton');
-            
-            wheel.classList.add('hidden');
-            pointer.style.display = 'none';
-            spinButton.style.display = 'none';
-            hideResult();
-            showGameControls(false);
-        }
-
-        function showWheel() {
-            const wheel = document.getElementById('wheel');
-            wheel.classList.remove('hidden');
-        }
 
         function drawWheel(rotation = 0) {
             const canvas = document.getElementById('wheel');
@@ -410,18 +287,28 @@
             // 清除畫布
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // 檢查數字範圍是否有效
+            const minNumber = parseInt(document.getElementById('minNumber').value);
+            const maxNumber = parseInt(document.getElementById('maxNumber').value);
             const pointer = document.getElementById('pointer');
             const spinButton = document.getElementById('spinButton');
 
-            // 如果沒有項目，不顯示轉盤
-            if (items.length === 0) {
+            if (isNaN(minNumber) || isNaN(maxNumber) || minNumber >= maxNumber) {
                 pointer.style.display = 'none';
                 spinButton.style.display = 'none';
-                hideResult();
+                numbers = []; // 清空數字數組
+                hideResult(); // 隱藏結果顯示
                 return;
             }
 
-            // 有項目時顯示箭頭和按鈕
+            // 如果沒有數字，不顯示轉盤
+            if (numbers.length === 0) {
+                pointer.style.display = 'none';
+                spinButton.style.display = 'none';
+                return;
+            }
+
+            // 有數字時顯示箭頭和按鈕
             pointer.style.display = 'block';
             spinButton.style.display = 'block';
 
@@ -432,14 +319,14 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            const segmentAngle = (Math.PI * 2) / items.length;
+            const segmentAngle = (Math.PI * 2) / numbers.length;
 
-            // 根據項目的長度調整字體大小
-            const maxLength = Math.max(...items.map(item => item.toString().length));
-            const fontSize = Math.max(12, Math.min(24, 30 - maxLength));
+            // 根據數字的位數調整字體大小
+            const maxDigits = Math.max(...numbers).toString().length;
+            const fontSize = Math.max(12, Math.min(24, 30 - maxDigits * 2));
             
-            // 繪製扇形和文字
-            items.forEach((item, index) => {
+            // 繪製扇形和數字
+            numbers.forEach((number, index) => {
                 const startAngle = index * segmentAngle + rotation;
                 const endAngle = startAngle + segmentAngle;
 
@@ -452,7 +339,7 @@
                 ctx.fill();
                 ctx.stroke();
 
-                // 繪製文字
+                // 繪製數字
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(startAngle + segmentAngle / 2);
@@ -461,27 +348,23 @@
                 ctx.font = `bold ${fontSize}px Arial`;
                 ctx.fillStyle = 'black';
                 
-                const textRadius = radius * 0.75;
-                
-                // 如果文字太長，進行截斷
-                let displayText = item.toString();
-                if (displayText.length > 10) {
-                    displayText = displayText.substring(0, 8) + '...';
-                }
-                
-                ctx.fillText(displayText, textRadius, 0);
+                const textRadius = radius * 0.85;
+                ctx.fillText(number.toString(), textRadius, 0);
                 ctx.restore();
             });
         }
 
-        function showResult(item) {
+        function showResult(number) {
             const resultContainer = document.getElementById('resultContainer');
             const winningNumberDisplay = document.getElementById('winningNumberDisplay');
             
-            winningNumberDisplay.textContent = item;
+            // 設置中獎數字
+            winningNumberDisplay.textContent = number;
             
+            // 顯示結果容器
             resultContainer.style.display = 'block';
             
+            // 觸發動畫
             setTimeout(() => {
                 resultContainer.classList.add('show');
             }, 50);
@@ -502,14 +385,14 @@
         }
 
         function shuffleNumbers() {
-            items = shuffleArray([...items]);
+            numbers = shuffleArray([...numbers]);
             currentRotation = 0;
             drawWheel();
             hideResult();
         }
 
         function resetNumbers() {
-            items = [...originalItems];
+            numbers = [...originalNumbers];
             currentRotation = 0;
             drawWheel();
             hideResult();
@@ -527,39 +410,25 @@
         }
 
         function generateWheel() {
-            let hasValidInput = false;
+            const minNumber = parseInt(document.getElementById('minNumber').value);
+            const maxNumber = parseInt(document.getElementById('maxNumber').value);
 
-            if (currentMode === 'number') {
-                const minNumber = parseInt(document.getElementById('minNumber').value);
-                const maxNumber = parseInt(document.getElementById('maxNumber').value);
-
-                if (!isNaN(minNumber) && !isNaN(maxNumber) && minNumber < maxNumber) {
-                    items = [];
-                    for (let i = minNumber; i <= maxNumber; i++) {
-                        items.push(i);
-                    }
-                    hasValidInput = true;
-                }
-            } else {
-                const input = document.getElementById('customInput').value;
-                const lines = input.trim().split('\n').filter(line => line.trim() !== '');
-
-                if (lines.length > 0) {
-                    items = lines;
-                    hasValidInput = true;
-                }
-            }
-
-            if (!hasValidInput) {
-                hideWheel();
+            if (isNaN(minNumber) || isNaN(maxNumber) || minNumber >= maxNumber) {
+                showGameControls(false);
+                hideResult();
                 return;
             }
 
-            originalItems = [...items];
+            numbers = [];
+            for (let i = minNumber; i <= maxNumber; i++) {
+                numbers.push(i);
+            }
+            originalNumbers = [...numbers];
+
             currentRotation = 0;
-            showWheel();
             drawWheel();
             showGameControls(true);
+            hideResult();
         }
 
         function spin() {
@@ -567,10 +436,10 @@
             spinButton.disabled = true;
             hideResult();
 
-            const randomIndex = Math.floor(Math.random() * items.length);
-            const winningItem = items[randomIndex];
+            const randomIndex = Math.floor(Math.random() * numbers.length);
+            const winningNumber = numbers[randomIndex];
             
-            const segmentAngle = (Math.PI * 2) / items.length;
+            const segmentAngle = (Math.PI * 2) / numbers.length;
             const extraSpins = 5;
             const targetRotation = -((randomIndex * segmentAngle) + (segmentAngle / 2) + (Math.PI * 2 * extraSpins));
             
@@ -591,7 +460,7 @@
                     requestAnimationFrame(animate);
                 } else {
                     setTimeout(() => {
-                        showResult(winningItem);
+                        showResult(winningNumber);
                         spinButton.disabled = false;
                     }, 100);
                 }
@@ -607,11 +476,6 @@
         });
 
         document.getElementById('maxNumber').addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(generateWheel, 300);
-        });
-
-        document.getElementById('customInput').addEventListener('input', function() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(generateWheel, 300);
         });

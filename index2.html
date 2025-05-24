@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>龜Talk輪盤</title>
+    <title>龜Talk輪盤 - 自訂輸入版</title>
     <style>
         * {
             -webkit-tap-highlight-color: transparent;
@@ -42,59 +42,19 @@
             margin: 15px 0;
         }
 
-        .mode-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .mode-button {
-            padding: 8px 20px;
-            border: 2px solid #4CAF50;
-            border-radius: 4px;
-            background-color: white;
-            color: #4CAF50;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .mode-button.active {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .input-container {
-            display: none;
-            margin: 15px 0;
-        }
-
-        .input-container.active {
-            display: block;
-        }
-
-        .number-input-group {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .text-input-group {
+        .input-group {
+            margin: 10px 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
         }
 
-        input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 100px;
-            font-size: 16px;
+        .control-buttons {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
 
         textarea {
@@ -112,13 +72,6 @@
             color: #666;
             font-size: 14px;
             margin: 5px 0;
-        }
-
-        .control-buttons {
-            margin: 15px 0;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
         }
 
         .wheel-container {
@@ -139,12 +92,6 @@
             left: 0;
             width: 100%;
             height: 100%;
-            opacity: 1;
-            transition: opacity 0.3s ease;
-        }
-
-        #wheel.hidden {
-            opacity: 0;
         }
 
         .spin-button {
@@ -253,11 +200,6 @@
                 font-size: 20px;
             }
 
-            .mode-button {
-                padding: 6px 16px;
-                font-size: 14px;
-            }
-
             .wheel-container {
                 margin: 10px auto;
             }
@@ -308,23 +250,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>龜Talk輪盤</h1>
-        <div class="mode-selector">
-            <button class="mode-button active" onclick="switchMode('number')">數字範圍</button>
-            <button class="mode-button" onclick="switchMode('text')">自訂文字</button>
-        </div>
-        <div id="numberInput" class="input-container active">
-            <div class="number-input-group">
-                <input type="number" id="minNumber" placeholder="最小數字" min="1" value="">
-                到
-                <input type="number" id="maxNumber" placeholder="最大數字" min="1" value="">
-            </div>
-        </div>
-        <div id="textInput" class="input-container">
-            <div class="text-input-group">
-                <textarea id="customInput" placeholder="請輸入要抽籤的內容，每行一個項目"></textarea>
-                <!-- <p class="input-hint">提示：每行輸入一個項目，可以是文字或數字</p> -->
-            </div>
+        <h1>龜Talk輪盤 - 自訂輸入版</h1>
+        <div class="input-group">
+            <textarea id="numberInput" placeholder="請輸入要抽籤的內容，每行一個項目"></textarea>
+            <p class="input-hint">提示：每行輸入一個項目，可以是文字或數字</p>
         </div>
         <div class="control-buttons">
             <button class="control-button shuffle-button" onclick="shuffleNumbers()" id="shuffleButton">打散</button>
@@ -346,59 +275,6 @@
         let originalItems = [];
         let currentRotation = 0;
         let debounceTimer;
-        let currentMode = 'number';
-
-        function switchMode(mode) {
-            if (mode === currentMode) return;
-
-            currentMode = mode;
-            const numberInput = document.getElementById('numberInput');
-            const textInput = document.getElementById('textInput');
-            const modeButtons = document.querySelectorAll('.mode-button');
-            const wheelContainer = document.querySelector('.wheel-container');
-
-            // 更新按鈕狀態
-            modeButtons.forEach(button => {
-                button.classList.remove('active');
-                if (button.textContent.includes(mode === 'number' ? '數字' : '文字')) {
-                    button.classList.add('active');
-                }
-            });
-
-            // 切換輸入區域
-            numberInput.classList.toggle('active');
-            textInput.classList.toggle('active');
-
-            // 清空輸入
-            if (mode === 'number') {
-                document.getElementById('minNumber').value = '';
-                document.getElementById('maxNumber').value = '';
-            } else {
-                document.getElementById('customInput').value = '';
-            }
-
-            // 隱藏輪盤和控制按鈕
-            hideWheel();
-            items = [];
-            originalItems = [];
-        }
-
-        function hideWheel() {
-            const wheel = document.getElementById('wheel');
-            const pointer = document.getElementById('pointer');
-            const spinButton = document.getElementById('spinButton');
-            
-            wheel.classList.add('hidden');
-            pointer.style.display = 'none';
-            spinButton.style.display = 'none';
-            hideResult();
-            showGameControls(false);
-        }
-
-        function showWheel() {
-            const wheel = document.getElementById('wheel');
-            wheel.classList.remove('hidden');
-        }
 
         function drawWheel(rotation = 0) {
             const canvas = document.getElementById('wheel');
@@ -527,39 +403,22 @@
         }
 
         function generateWheel() {
-            let hasValidInput = false;
+            const input = document.getElementById('numberInput').value;
+            const lines = input.trim().split('\n').filter(line => line.trim() !== '');
 
-            if (currentMode === 'number') {
-                const minNumber = parseInt(document.getElementById('minNumber').value);
-                const maxNumber = parseInt(document.getElementById('maxNumber').value);
-
-                if (!isNaN(minNumber) && !isNaN(maxNumber) && minNumber < maxNumber) {
-                    items = [];
-                    for (let i = minNumber; i <= maxNumber; i++) {
-                        items.push(i);
-                    }
-                    hasValidInput = true;
-                }
-            } else {
-                const input = document.getElementById('customInput').value;
-                const lines = input.trim().split('\n').filter(line => line.trim() !== '');
-
-                if (lines.length > 0) {
-                    items = lines;
-                    hasValidInput = true;
-                }
-            }
-
-            if (!hasValidInput) {
-                hideWheel();
+            if (lines.length === 0) {
+                showGameControls(false);
+                hideResult();
                 return;
             }
 
+            items = lines;
             originalItems = [...items];
+
             currentRotation = 0;
-            showWheel();
             drawWheel();
             showGameControls(true);
+            hideResult();
         }
 
         function spin() {
@@ -601,17 +460,7 @@
         }
 
         // 監聽輸入框變化
-        document.getElementById('minNumber').addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(generateWheel, 300);
-        });
-
-        document.getElementById('maxNumber').addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(generateWheel, 300);
-        });
-
-        document.getElementById('customInput').addEventListener('input', function() {
+        document.getElementById('numberInput').addEventListener('input', function() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(generateWheel, 300);
         });
